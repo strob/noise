@@ -41,30 +41,10 @@ def make_levels():
     # interpolate generated noise to output resolution
     vnoises = []
     for N in noisegen:
-        x_idx = numpy.linspace(0, N.shape[1], SIZE[1], endpoint=False)
-        y_idx = numpy.linspace(0, N.shape[0], SIZE[0], endpoint=False)
+        x_idx = numpy.linspace(0, N.shape[1], SIZE[1], endpoint=False).astype(int)
+        y_idx = numpy.linspace(0, N.shape[0], SIZE[0], endpoint=False).astype(int)
         y_idx = y_idx.reshape((SIZE[0], 1)) # column vector
-
-        x_idx_floor = numpy.floor(x_idx).astype(int)
-        x_idx_ceil  = numpy.ceil(x_idx).astype(int)
-        x_idx_ceil[x_idx_ceil==N.shape[1]] = 0 # wrap around
-        x_idx_weight= x_idx - x_idx_floor
-        y_idx_floor = numpy.floor(y_idx).astype(int)
-        y_idx_ceil  = numpy.ceil(y_idx).astype(int)
-        y_idx_ceil[y_idx_ceil==N.shape[0]] = 0
-        y_idx_weight= y_idx - y_idx_floor
-
-        out = numpy.zeros(SIZE)
-
-        for i in range(3):
-            # VOODOO! (a.k.a. fast linear interpolation)
-            out[:,:,i] = N[y_idx_floor, x_idx_floor, i]*(1-y_idx_weight)*(1-x_idx_weight) + \
-                N[y_idx_floor, x_idx_ceil, i]*(1-y_idx_weight)*(x_idx_weight) + \
-                N[y_idx_ceil, x_idx_floor, i]*(y_idx_weight)*(1-x_idx_weight) + \
-                N[y_idx_ceil, x_idx_ceil, i]*y_idx_weight*x_idx_weight
-        
-        vnoises.append(out.clip(0,255).astype(numpy.uint8))
-
+        vnoises.append(N[y_idx, x_idx])
 
     voffsets= [numpy.random.randint(0, SIZE[0]) for X in LEVELS]
     
@@ -126,16 +106,18 @@ def audio_out(a):
     for i,freq in enumerate(freqs):
         step = 2 * numpy.pi * freq * (len(a) / float(A_RATE))
 
-        sinarr = numpy.linspace(
+        arr = (numpy.linspace(
             phase[i],
             phase[i] + step,
-            len(a))
-        antisinarr = numpy.linspace(
+            len(a)) % (2*numpy.pi) > numpy.pi).astype(numpy.int)
+        antiarr = (numpy.linspace(
             phase[i] + antiphase,
             phase[i] + step + antiphase,
-            len(a))
+            len(a)) % (2*numpy.pi) > numpy.pi).astype(numpy.int)
 
-        a[:,0] += (pow(2,15)/len(aamps[level])) * aamps[level][i] * (numpy.sin(sinarr) + numpy.sin(antisinarr))
+        a[:,0] += (pow(2,15)/max(1,len(aamps[level]))) * \
+            aamps[level][i] * \
+            (arr + antiarr)
 
         phase[i] = phase[i] + step % (2 * numpy.pi)
     a[:,1] = a[:,0]
