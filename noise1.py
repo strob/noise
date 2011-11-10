@@ -115,7 +115,7 @@ def audio_out(a):
             phase[i] + step + antiphase,
             len(a)) % (2*numpy.pi) > numpy.pi).astype(numpy.int)
 
-        a[:,0] += (pow(2,15)/max(1,len(aamps[level]))) * \
+        a[:,0] += (pow(2,15)/(len(aamps[level])+1)) * \
             aamps[level][i] * \
             (arr + antiarr)
 
