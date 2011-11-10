@@ -10,8 +10,8 @@ LEVELS = [(10,  2),
 SPEED  = 10
 
 # SYSTEM CONFIG
-SIZE   = (240, 320) # XXX: Maybe, just maybe, numm should allow
-                    #      variable output sizing.
+SIZE   = (240, 320, 3)     # XXX: Maybe, just maybe, numm should allow
+                           #      variable output sizing.
 A_RATE = 44100
 
 # GAME STATE
@@ -41,10 +41,28 @@ def make_levels():
     # interpolate generated noise to output resolution
     vnoises = []
     for N in noisegen:
-        x_idx = numpy.linspace(0, N.shape[1], SIZE[1], endpoint=False).astype(int)
-        y_idx = numpy.linspace(0, N.shape[0], SIZE[0], endpoint=False).astype(int)
+        x_idx = numpy.linspace(0, N.shape[1], SIZE[1], endpoint=False)
+        y_idx = numpy.linspace(0, N.shape[0], SIZE[0], endpoint=False)
         y_idx = y_idx.reshape((SIZE[0], 1)) # column vector
-        vnoises.append(N[y_idx, x_idx])
+
+        x_idx_floor = numpy.floor(x_idx).astype(int)
+        x_idx_ceil  = numpy.ceil(x_idx).astype(int).clip(0, N.shape[1]-1)
+        x_idx_weight= x_idx - x_idx_floor
+        y_idx_floor = numpy.floor(y_idx).astype(int)
+        y_idx_ceil  = numpy.ceil(y_idx).astype(int).clip(0, N.shape[0]-1)
+        y_idx_weight= y_idx - y_idx_floor
+
+        out = numpy.zeros(SIZE)
+
+        for i in range(3):
+            # VOODOO! (a.k.a. fast linear interpolation)
+            out[:,:,i] = N[y_idx_floor, x_idx_floor, i]*(1-y_idx_weight)*(1-x_idx_weight) + \
+                N[y_idx_floor, x_idx_ceil, i]*(1-y_idx_weight)*(x_idx_weight) + \
+                N[y_idx_ceil, x_idx_floor, i]*(y_idx_weight)*(1-x_idx_weight) + \
+                N[y_idx_ceil, x_idx_ceil, i]*y_idx_weight*x_idx_weight
+        
+        vnoises.append(out.clip(0,255).astype(numpy.uint8))
+
 
     voffsets= [numpy.random.randint(0, SIZE[0]) for X in LEVELS]
     
@@ -78,7 +96,23 @@ def video_out(a):
     anti_y_idx = range(my, a.shape[0]) + range(my)
     anti_y_idx = numpy.array(anti_y_idx, dtype=int).reshape((SIZE[0], 1))
 
-    a[:] = vnoises[level][y_idx,x_idx] - vnoises[level][anti_y_idx,anti_x_idx]
+
+    bgnoise = numpy.zeros(SIZE)
+    for i in range(level, len(LEVELS)-1):
+        nxr = numpy.random.randint(0, SIZE[1])
+        noise_x_idx = range(nxr, a.shape[1]) + range(nxr)
+        nyr = numpy.random.randint(0, SIZE[0])
+        noise_y_idx = range(nyr, a.shape[0]) + range(nyr)
+        noise_y_idx = numpy.array(noise_y_idx, dtype=int).reshape((SIZE[0], 1))
+        
+        for c in range(3):
+            bgnoise[:,:,c] += vnoises[i][noise_y_idx,noise_x_idx,0]
+    bgnoise /= (len(LEVELS)-1-level)
+
+
+    a[:] = (vnoises[level][y_idx,x_idx].astype(int) - \
+                vnoises[level][anti_y_idx,anti_x_idx].astype(int) +\
+                bgnoise).clip(0,255)
 
 def audio_out(a):
     phasescale = numpy.pi/numpy.sqrt(2)
