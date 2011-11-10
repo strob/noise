@@ -46,10 +46,12 @@ def make_levels():
         y_idx = y_idx.reshape((SIZE[0], 1)) # column vector
 
         x_idx_floor = numpy.floor(x_idx).astype(int)
-        x_idx_ceil  = numpy.ceil(x_idx).astype(int).clip(0, N.shape[1]-1)
+        x_idx_ceil  = numpy.ceil(x_idx).astype(int)
+        x_idx_ceil[x_idx_ceil==N.shape[1]] = 0 # wrap around
         x_idx_weight= x_idx - x_idx_floor
         y_idx_floor = numpy.floor(y_idx).astype(int)
-        y_idx_ceil  = numpy.ceil(y_idx).astype(int).clip(0, N.shape[0]-1)
+        y_idx_ceil  = numpy.ceil(y_idx).astype(int)
+        y_idx_ceil[y_idx_ceil==N.shape[0]] = 0
         y_idx_weight= y_idx - y_idx_floor
 
         out = numpy.zeros(SIZE)
@@ -118,21 +120,24 @@ def audio_out(a):
     phasescale = numpy.pi/numpy.sqrt(2)
     antiphase = numpy.pi + phasescale*dist()
 
-    for i,freq in enumerate(afreqs[level]):
+    freqs = afreqs[level]
+    phase = aphase[level]
+
+    for i,freq in enumerate(freqs):
         step = 2 * numpy.pi * freq * (len(a) / float(A_RATE))
 
         sinarr = numpy.linspace(
-            aphase[level][i],
-            aphase[level][i] + step,
+            phase[i],
+            phase[i] + step,
             len(a))
         antisinarr = numpy.linspace(
-            aphase[level][i] + antiphase,
-            aphase[level][i] + step + antiphase,
+            phase[i] + antiphase,
+            phase[i] + step + antiphase,
             len(a))
 
         a[:,0] += (pow(2,15)/len(aamps[level])) * aamps[level][i] * (numpy.sin(sinarr) + numpy.sin(antisinarr))
 
-        aphase[level][i] = aphase[level][i] + step % (2 * numpy.pi)
+        phase[i] = phase[i] + step % (2 * numpy.pi)
     a[:,1] = a[:,0]
     
 def mouse_in(type, px, py, b):
