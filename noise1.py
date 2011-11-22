@@ -131,4 +131,4 @@ def mouse_in(type, px, py, b):
 
 if __name__=='__main__':
     import numm.run
-    numm.run.run(**globals())
+    numm.run(**globals())
