@@ -65,13 +65,24 @@ def video_out(a):
     global vxoffset
     int_xoff = int(vxoffset)
     x_idx = range(int_xoff, a.shape[1]) + range(int_xoff)
+
     # motion?
-    #vxoffset = (vxoffset + SPEED*dist()) % a.shape[1]
+    # vxoffset = (vxoffset + SPEED*dist()) % a.shape[1]
+
+    # bgnoise
+    bgnoise = numpy.zeros(SIZE)
+    for i in range(level, len(LEVELS)-1):
+        nxr = numpy.random.randint(0, SIZE[1])
+        noise_x_idx = range(nxr, a.shape[1]) + range(nxr)
+
+        for c in range(3):
+            bgnoise[:,:,c] += vnoises[i][noise_x_idx,0]
 
     anti_x_idx = range(mx, a.shape[1]) + range(mx)
 
-    a[:] = abs((vnoises[level][x_idx] - \
-        vnoises[level][anti_x_idx])*255).clip(0,255)
+    a[:] = (abs((vnoises[level][x_idx] - \
+        vnoises[level][anti_x_idx])*255)).clip(0,255)
+    a[:] = ((100*bgnoise.astype(int)-50*bgnoise) + a).clip(0,255)
     
 def audio_out(a):
     phasescale = numpy.pi/numpy.sqrt(2)
@@ -103,11 +114,10 @@ def mouse_in(type, px, py, b):
     global mx, my, level, vxoffset
     mx = int(px*SIZE[1])
     my = int(py*SIZE[0])
-    if dist() < 0.01 and level < len(LEVELS)-1:
+    # TODO: Wait until mouse has stopped moving to advance level
+    if dist() < 0.005 and level < len(LEVELS)-1:
         level += 1
         vxoffset = numpy.random.randint(0,SIZE[1])
-        print 'level up'
-        
 
 if __name__=='__main__':
     numm.run(**globals())
