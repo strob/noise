@@ -56,9 +56,8 @@ def make_levels():
 make_levels()
 
 def dist():
-    "0 is close, 1 is far, sqrt(2) is max."
-    return pow(
-        pow((mx-vxoffset)/float(SIZE[1]), 2), 0.5)
+    "0 is close, 1 is far"
+    return abs((mx-vxoffset)/float(SIZE[1]))
     
 # GAME
 
