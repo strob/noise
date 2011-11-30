@@ -1,4 +1,4 @@
-import numpy
+import numm, numpy
 
 # GAME CONFIG
 # video frequency, audio bins, y-offset
@@ -130,5 +130,4 @@ def mouse_in(type, px, py, b):
         level += 1
 
 if __name__=='__main__':
-    import numm.run
     numm.run(**globals())
