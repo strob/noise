@@ -1,0 +1,19 @@
+= Install on debian/ubuntu
+
+noise requires the numm library (http://numm.org/numm/) and all
+associated dependencies:
+
+$ wget http://numm.org/numm/releases/python-numm_0.1-1_all.deb
+# dpkg -i python-numm_0.1-1_all.deb
+
+the three noisegames will then run as standard python scripts:
+
+$ git clone git://numm.org/noise
+$ cd noise
+$ python noise0.py
+$ python noise1.py
+$ python noise2.py
+
+= Elsewhere
+
+huh?
