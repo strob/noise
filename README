@@ -1,7 +1,3 @@
-Experimental implementation of noisegame using numm instead of glitch.
-
-Fuck OpenGL.
-
 = About
 
 Noise
@@ -11,31 +7,23 @@ By numm
 Noise is a series of numerical/abstract video games pitting noise
 against anti-noise in an epic struggle for order out of chaos.
 
-[Video]
-
 Noise n.0
 -------
-
-[Image]
 
 Bitwise: from where it all began.
 
 Noise n.1
 -------
 
-[Image]
-
-Value: interpolation into value between.
+Value: interpolation into the between.
 
 Noise n.2
 -------
 
-[Image]
-
 Oscillate: dynamical system.
 
 
-== Source code
+= Source code
 Noise is written in python using the numm numerical arts library.
 
-[link]
+http://git.numm.org/?p=noise
