@@ -78,23 +78,8 @@ def video_out(a):
     anti_y_idx = range(my, a.shape[0]) + range(my)
     anti_y_idx = numpy.array(anti_y_idx, dtype=int).reshape((SIZE[0], 1))
 
-
-    bgnoise = numpy.zeros(SIZE)
-    for i in range(level, len(LEVELS)-1):
-        nxr = numpy.random.randint(0, SIZE[1])
-        noise_x_idx = range(nxr, a.shape[1]) + range(nxr)
-        nyr = numpy.random.randint(0, SIZE[0])
-        noise_y_idx = range(nyr, a.shape[0]) + range(nyr)
-        noise_y_idx = numpy.array(noise_y_idx, dtype=int).reshape((SIZE[0], 1))
-        
-        for c in range(3):
-            bgnoise[:,:,c] += vnoises[i][noise_y_idx,noise_x_idx,0]
-    bgnoise /= (len(LEVELS)-1-level)
-
-
-    a[:] = (vnoises[level][y_idx,x_idx].astype(int) - \
-                vnoises[level][anti_y_idx,anti_x_idx].astype(int) +\
-                bgnoise).clip(0,255)
+    a[:] = vnoises[level][y_idx,x_idx] - \
+        vnoises[level][anti_y_idx,anti_x_idx]
 
 def audio_out(a):
     phasescale = numpy.pi/numpy.sqrt(2)
