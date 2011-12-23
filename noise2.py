@@ -55,7 +55,7 @@ def resize(N,width,height):
 
     x_idx = numpy.linspace(0, N.shape[1], width, endpoint=False)
     y_idx = numpy.linspace(0, N.shape[0], height, endpoint=False)
-    y_idx = y_idx.reshape((SIZE[0], 1)) # column vector
+    y_idx = y_idx.reshape((height, 1)) # column vector
 
     x_idx_floor = numpy.floor(x_idx).astype(int)
     x_idx_ceil  = numpy.ceil(x_idx).astype(int)
