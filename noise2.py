@@ -40,31 +40,9 @@ def make_levels():
 
     # interpolate generated noise to output resolution
     vnoises = []
+    
     for N in noisegen:
-        x_idx = numpy.linspace(0, N.shape[1], SIZE[1], endpoint=False)
-        y_idx = numpy.linspace(0, N.shape[0], SIZE[0], endpoint=False)
-        y_idx = y_idx.reshape((SIZE[0], 1)) # column vector
-
-        x_idx_floor = numpy.floor(x_idx).astype(int)
-        x_idx_ceil  = numpy.ceil(x_idx).astype(int)
-        x_idx_ceil[x_idx_ceil==N.shape[1]] = 0 # wrap around
-        x_idx_weight= x_idx - x_idx_floor
-        y_idx_floor = numpy.floor(y_idx).astype(int)
-        y_idx_ceil  = numpy.ceil(y_idx).astype(int)
-        y_idx_ceil[y_idx_ceil==N.shape[0]] = 0
-        y_idx_weight= y_idx - y_idx_floor
-
-        out = numpy.zeros(SIZE)
-
-        for i in range(3):
-            # VOODOO! (a.k.a. fast linear interpolation)
-            out[:,:,i] = N[y_idx_floor, x_idx_floor, i]*(1-y_idx_weight)*(1-x_idx_weight) + \
-                N[y_idx_floor, x_idx_ceil, i]*(1-y_idx_weight)*(x_idx_weight) + \
-                N[y_idx_ceil, x_idx_floor, i]*(y_idx_weight)*(1-x_idx_weight) + \
-                N[y_idx_ceil, x_idx_ceil, i]*y_idx_weight*x_idx_weight
-        
-        vnoises.append(out.clip(0,255).astype(numpy.uint8))
-
+        vnoises.append(resize(N,SIZE[1],SIZE[0]))
 
     voffsets= [numpy.random.randint(0, SIZE[0]) for X in LEVELS]
     
@@ -72,6 +50,32 @@ def make_levels():
                for X in LEVELS]
     aamps =   [numpy.random.random(size=X[1]) for X in LEVELS]
     aphase=   [numpy.zeros(X[1]) for X in LEVELS]
+
+def resize(N,width,height):
+
+    x_idx = numpy.linspace(0, N.shape[1], width, endpoint=False)
+    y_idx = numpy.linspace(0, N.shape[0], height, endpoint=False)
+    y_idx = y_idx.reshape((SIZE[0], 1)) # column vector
+
+    x_idx_floor = numpy.floor(x_idx).astype(int)
+    x_idx_ceil  = numpy.ceil(x_idx).astype(int)
+    x_idx_ceil[x_idx_ceil==N.shape[1]] = 0 # wrap around
+    x_idx_weight= x_idx - x_idx_floor
+    y_idx_floor = numpy.floor(y_idx).astype(int)
+    y_idx_ceil  = numpy.ceil(y_idx).astype(int)
+    y_idx_ceil[y_idx_ceil==N.shape[0]] = 0
+    y_idx_weight= y_idx - y_idx_floor
+
+    out = numpy.zeros((height,width,N.shape[2]))
+
+    for i in range(N.shape[2]):
+        # VOODOO! (a.k.a. fast linear interpolation)
+        out[:,:,i] = N[y_idx_floor, x_idx_floor, i]*(1-y_idx_weight)*(1-x_idx_weight) + \
+            N[y_idx_floor, x_idx_ceil, i]*(1-y_idx_weight)*(x_idx_weight) + \
+            N[y_idx_ceil, x_idx_floor, i]*(y_idx_weight)*(1-x_idx_weight) + \
+            N[y_idx_ceil, x_idx_ceil, i]*y_idx_weight*x_idx_weight
+    
+    return out.astype(N.dtype)
 
 make_levels()
 
