@@ -1,7 +1,7 @@
 import numm, numpy
 
 # GAME CONFIG
-# video frequency, audio bins, y-offset
+# video frequency, audio bins
 LEVELS = [(10,  2),
           (20,  4),
           (50,  10),
@@ -27,6 +27,8 @@ aphase = []                     # phase of each audio band
 
 mx = SIZE[0]/2                  # mouse
 my = SIZE[1]/2
+
+m_acc = 0.0                     # motion accumulation
 
 # GAME INIT
 def make_levels():
@@ -127,8 +129,8 @@ def audio_out(a):
     
 def mouse_in(type, px, py, b):
     global mx, my, level
-    mx = int(px*SIZE[1])
-    my = int(py*SIZE[0])
+    mx = int((1.0-px)*SIZE[1])
+    my = int((1.0-py)*SIZE[0])
     if dist() < 0.01 and level < len(LEVELS)-1:
         level += 1
 
