@@ -39,6 +39,7 @@ def make_levels():
 
     noisegen= [numpy.random.random_integers(0, 255, (X[0], X[0], 3))
                for X in LEVELS]
+    noisegen[-1] *= 0
 
     # interpolate generated noise to output resolution
     vnoises = []
