@@ -1,8 +1,10 @@
 // g++ -o noise2 noise2.cc -lSDL -lm
 
-#include <SDL/SDL.h>
-#include <stdio.h>
 #include <math.h>
+#include <SDL/SDL.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 float freq = 200.0;             /* frequency */
 float phase= 0.0;               /* phase */
@@ -12,17 +14,15 @@ float dist = 1.0;
 void audio_out(void *udata, Uint8 *stream, int len) {
 
   /* We know that the stream _really_ is int16 */
-  int16_t *real_stream;
-  int real_len;
-
-  real_stream = (int16_t*) stream;
-  real_len = len / sizeof(int16_t);
+  int16_t *real_stream = (int16_t*) stream;
+  int real_len = len / sizeof(int16_t);
 
   while(real_len--) {
     /* I didn't memorize eight digits of pi for nothing! */
-    *real_stream++ += 16000 * \
-      (sin( 2 * 3.1415926 * freq * phase / 44100.0 ) +                  \
-       sin( (1.0+dist)*3.1415926 + 2 * 3.1415926 * freq * phase++ / 44100.0 ));
+    *real_stream++ += 16000 *
+      (sin( 2 * 3.1415926 * freq * phase / 44100.0 ) +
+       sin( (1.0+dist)*3.1415926 + 2 * 3.1415926 * freq * phase / 44100.0 ));
+    phase++;
   }
 }
 
@@ -31,10 +31,9 @@ int main(int argc, char *argv[]) {
   SDL_Event event;
   SDL_Surface *screen;
   SDL_AudioSpec desired;
-  float old_freq;
 
-  int cur_x;
-  int cur_y;
+  int cur_x = 0;
+  int cur_y = 0;
 
   int antagonist_x = 100;
   int antagonist_y = 100;
@@ -80,9 +79,8 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // <boilerplate crap>
   if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO) == -1) { 
-    printf("no go sdl init: %s.\n", SDL_GetError());
+    fprintf(stderr, "no go sdl init: %s.\n", SDL_GetError());
     exit(1);
   }
 
@@ -97,41 +95,36 @@ int main(int argc, char *argv[]) {
   desired.freq = 44100;
   desired.format = AUDIO_S16;
   desired.channels = 2;
-  desired.samples = 1024;
+  desired.samples = 2048;
   desired.callback = audio_out;
   desired.userdata = NULL;
 
   if ( SDL_OpenAudio(&desired, NULL) < 0) {
-    printf("i never get what i want");
+    fprintf(stderr, "i never get what i want");
     exit(1);
   }
 
+  // Start audio callback processing
   SDL_PauseAudio(0);
 
-  // </boils>
-
   while( true ) {
-  while ( SDL_PollEvent(&event) > 0 ) {
-    switch (event.type) {
-    case SDL_MOUSEMOTION: {
-      cur_x = event.motion.x;
-      cur_y = event.motion.y;
+    while ( SDL_PollEvent(&event) > 0 ) {
+      switch (event.type) {
+      case SDL_MOUSEMOTION: {
+        cur_x = event.motion.x;
+        cur_y = event.motion.y;
 
-      dist = pow(pow((cur_x-antagonist_x)/640.0, 2) + \
-                 pow((cur_y-antagonist_y)/480.0, 2),
-                 0.5);
-      break;
+        dist = pow(pow((cur_x-antagonist_x)/640.0, 2) + \
+                   pow((cur_y-antagonist_y)/480.0, 2),
+                   0.5);
+        break;
+      }
+      case SDL_KEYDOWN:
+        exit(0);
+      case SDL_QUIT:
+        exit(0);
+      }
     }
-    case SDL_KEYDOWN: {
-      exit(0);
-      break;
-    }
-    case SDL_QUIT: {
-      exit(0);
-      break;
-    }
-    }
-  }
   antagonist_x = int(antagonist_x + pow(20*dist, 0.5)) % 640;
 
   SDL_LockSurface(screen);
